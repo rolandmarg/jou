@@ -8,9 +8,13 @@ import (
 // Entry contains entry user input and other metadata
 type Entry struct {
 	id        int64
+	journalID int64
 	deletedAt time.Time
 	createdAt time.Time
-	*EntryInput
+	title     string
+	body      string
+	tags      []Tag
+	mood      string
 }
 
 // EntryInput contains all fields user can provide for journal entry creation
@@ -23,66 +27,104 @@ type EntryInput struct {
 
 // EntryRepo provides entry CRUD methods
 type EntryRepo struct {
-	db *sql.DB // TODO don't leak db variable
+	// TODO don't leak internal variables
+	db      *sql.DB
+	tagRepo *TagRepo
 }
 
 // MakeEntryRepo creates a new entry repository
 func MakeEntryRepo(db *sql.DB) *EntryRepo {
-	e := &EntryRepo{db: db}
+	tagRepo := &TagRepo{db: db}
+	e := &EntryRepo{db, tagRepo}
 
 	return e
 }
 
-// Create a new journal entry
-func (repo *EntryRepo) Create(journalID int64, i *EntryInput) (e *Entry, err error) {
-	e = &Entry{createdAt: time.Now(), EntryInput: i}
-
-	res, err := repo.db.Exec(
-		`INSERT INTO entry (journalID, title, body, mood, created_at) values(?, ?, ?, ?, ?)`,
-		journalID, e.title, e.body, e.mood, e.createdAt)
+// Create a new journal entry and returns entry id
+func (repo *EntryRepo) Create(journalID int64, i *EntryInput) (int64, error) {
+	tx, err := repo.db.Begin()
 	if err != nil {
-		return
+		return 0, err
+	}
+	// TODO maybe handle rollback error
+	defer tx.Rollback()
+
+	res, err := tx.Exec(
+		`INSERT INTO entry (journal_id, title, body, mood, created_at) values(?, ?, ?, ?, ?)`,
+		journalID, i.title, i.body, i.mood, time.Now())
+	if err != nil {
+		return 0, err
 	}
 
-	e.id, err = res.LastInsertId()
+	entryID, err := res.LastInsertId()
 	if err != nil {
-		return
+		return 0, err
 	}
 
-	return
+	for _, tag := range i.tags {
+		// TODO maybe create tags in goroutine
+		_, err = repo.tagRepo.Create(entryID, tag, tx)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return 0, err
+	}
+
+	return entryID, nil
 }
 
 // Get a journal entry
-func (repo *EntryRepo) Get(entryID int64) (e *Entry, err error) {
-	e = &Entry{EntryInput: &EntryInput{}}
+func (repo *EntryRepo) Get(entryID int64) (*Entry, error) {
+	type result struct {
+		tags []Tag
+		err  error
+	}
+	c := make(chan result, 1)
 
-	row := repo.db.QueryRow(`
-		SELECT id, title, body, mood, created_at, T.name FROM ENTRY E 
-		WHERE E.id=? AND E.deleted_at IS NULL
-		INNER JOIN TAG T
-			ON E.id = T.entry_id
-		`, entryID)
-	err = row.Scan(&e.id, &e.title, &e.body, &e.mood, &e.createdAt)
-	// TODO add goroutine to select tags too
+	go func() {
+		tags, err := repo.tagRepo.Get(entryID)
+		c <- result{tags, err}
+	}()
+
+	row := repo.db.QueryRow(`SELECT id, journal_id, title, body, mood, created_at
+		FROM entry WHERE id=? AND deleted_at IS NULL`, entryID)
+
+	e := Entry{}
+	err := row.Scan(&e.id, &e.journalID, &e.title, &e.body, &e.mood, &e.createdAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return
+		return nil, err
 	}
-	return
+
+	r := <-c
+	if r.err != nil {
+		return nil, r.err
+	}
+
+	e.tags = r.tags
+
+	return &e, nil
 }
 
-// Remove a journal entry
-func (repo *EntryRepo) Remove(entryID int64) (affected bool, err error) {
+// Remove a journal entry, returns true or false if rows are affected
+func (repo *EntryRepo) Remove(entryID int64) (bool, error) {
 	res, err := repo.db.Exec(`UPDATE entry SET deleted_at=? WHERE id=?`, time.Now(), entryID)
 	if err != nil {
-		return
+		return false, err
 	}
 
 	numAffected, err := res.RowsAffected()
-	if err != nil || numAffected == 0 {
-		return
+	if err != nil {
+		return false, err
+	}
+	if numAffected == 0 {
+		return false, nil
 	}
 
 	return true, nil

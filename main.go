@@ -84,14 +84,26 @@ func e(err error) {
 // }
 
 /*
-TODO add sqlite
-TODO add redis
-TODO add sessions in redis
-TODO add tests
-TODO add benchmark tests
-TODO add logging
-TODO add optional data encryption in db
-TODO add pincode on journal
-TODO add backups periodically
-TODO add geolocation
+TODO list
+
+add redis
+add sessions in redis
+add benchmark tests
+add logging
+add optional data encryption in db
+add pincode on journal
+add backups periodically
+add geolocation
+
+Actions
+	journal
+		create
+		edit
+		delete
+		get with entries
+	entry
+		create
+		edit
+		delete
+		get with tags
 */
