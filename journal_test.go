@@ -135,6 +135,30 @@ func TestGetDefaultJournal(t *testing.T) {
 	}
 }
 
+func TestUpdateJournal(t *testing.T) {
+	db, Teardown := Setup(t)
+	defer Teardown()
+
+	repo := MakeJournalRepo(db)
+
+	id, err := repo.Create("xutu")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = repo.Update(id, "butu")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	j, err := repo.Get(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if j.name != "butu" {
+		t.Fatalf("Expected name %v received %v", "butu", j.name)
+	}
+}
 func TestCreateJournal(t *testing.T) {
 	db, Teardown := Setup(t)
 	defer Teardown()
