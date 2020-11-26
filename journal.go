@@ -31,7 +31,7 @@ func MakeJournalRepo(db *sql.DB) *JournalRepo {
 
 // Create a new journal
 func (repo *JournalRepo) Create(name string) (int64, error) {
-	res, err := repo.db.Exec(`INSERT INTO journal (name, created_at) values(?, ?)`,
+	res, err := repo.db.Exec(`INSERT INTO journal (name, created_at) VALUES (?, ?)`,
 		name, time.Now())
 	if err != nil {
 		return 0, err
@@ -68,6 +68,11 @@ func (repo *JournalRepo) Get(id int64) (*Journal, error) {
 
 	return j, nil
 }
+
+// // GetDefault journal
+// func (repo *JournalRepo) GetDefault() (*Journal, error) {
+
+// }
 
 // Update journal name
 func (repo *JournalRepo) Update(id int64, name string) error {

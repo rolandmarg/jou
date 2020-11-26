@@ -10,7 +10,8 @@ const schema = `
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		name VARCHAR(64) NOT NULL,
 		created_at DATE NOT NULL,
-		deleted_at DATE
+		deleted_at DATE,
+		UNIQUE(name)
 	);
 
 	CREATE TABLE IF NOT EXISTS entry (
@@ -29,6 +30,12 @@ const schema = `
 		name VARCHAR(64) NOT NULL,
 		entry_id INTEGER NOT NULL REFERENCES entry(id) ON DELETE CASCADE,
 		UNIQUE(entry_id, name)
+	);
+
+	CREATE TABLE IF NOT EXISTS env (
+		name VARCHAR(128) NOT NULL,
+		value TEXT NOT NULL,
+		UNIQUE(name)
 	);
 `
 

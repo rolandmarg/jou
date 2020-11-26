@@ -51,7 +51,7 @@ func (repo *EntryRepo) Create(journalID int64, i *EntryInput) (int64, error) {
 	defer tx.Rollback()
 
 	res, err := tx.Exec(
-		`INSERT INTO entry (journal_id, title, body, mood, created_at) values(?, ?, ?, ?, ?)`,
+		`INSERT INTO entry (journal_id, title, body, mood, created_at) VALUES (?, ?, ?, ?, ?)`,
 		journalID, i.title, i.body, i.mood, time.Now())
 	if err != nil {
 		return 0, err
