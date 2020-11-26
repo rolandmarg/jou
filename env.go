@@ -2,6 +2,8 @@ package main
 
 import "database/sql"
 
+// TODO create in memory map of env values
+
 // Env contains environmental information
 type Env struct {
 	name  string

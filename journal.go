@@ -19,12 +19,14 @@ type Journal struct {
 type JournalRepo struct {
 	db        *sql.DB
 	entryRepo *EntryRepo
+	envRepo   *EnvRepo
 }
 
 // MakeJournalRepo creates a new journal repository
 func MakeJournalRepo(db *sql.DB) *JournalRepo {
 	entryRepo := MakeEntryRepo(db)
-	journalRepo := &JournalRepo{db, entryRepo}
+	envRepo := MakeEnvRepo(db)
+	journalRepo := &JournalRepo{db, entryRepo, envRepo}
 
 	return journalRepo
 }
@@ -69,10 +71,54 @@ func (repo *JournalRepo) Get(id int64) (*Journal, error) {
 	return j, nil
 }
 
-// // GetDefault journal
-// func (repo *JournalRepo) GetDefault() (*Journal, error) {
+// GetByName journal
+func (repo *JournalRepo) GetByName(name string) (*Journal, error) {
+	// TODO possibly get journal and entries in 1 sql statement
+	// or use goroutines
+	row := repo.db.QueryRow(`SELECT id, created_at FROM journal
+		WHERE name = ? AND deleted_at IS NULL`, name)
 
-// }
+	j := &Journal{name: name}
+	err := row.Scan(&j.id, &j.createdAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	j.entries, err = repo.entryRepo.GetByJournalID(j.id)
+	if err != nil {
+		return j, err
+	}
+
+	return j, nil
+}
+
+// GetDefault journal
+func (repo *JournalRepo) GetDefault() (*Journal, error) {
+	name, err := repo.envRepo.Get("default_journal")
+	if err != nil {
+		return nil, err
+	}
+
+	j, err := repo.GetByName(name)
+	if err != nil {
+		return nil, err
+	}
+
+	return j, nil
+}
+
+// SetDefault journal by name
+func (repo *JournalRepo) SetDefault(name string) error {
+	err := repo.envRepo.Set("default_journal", name)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 
 // Update journal name
 func (repo *JournalRepo) Update(id int64, name string) error {
