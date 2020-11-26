@@ -26,6 +26,7 @@ func MakeTagRepo(db *sql.DB) *TagRepo {
 
 // Create a new tag and return tag id
 func (repo *TagRepo) Create(entryID int64, name string, tx *sql.Tx) (int64, error) {
+	// TODO allow only alphabet characters in name
 	res, err := tx.Exec(`INSERT INTO tag (name, entry_id) values(?, ?)`, name, entryID)
 	if err != nil {
 		return 0, err
@@ -48,7 +49,7 @@ func (repo *TagRepo) Get(entryID int64) ([]Tag, error) {
 	defer rows.Close()
 
 	tag := Tag{entryID: entryID}
-	tags := make([]Tag, 0, 4)
+	var tags []Tag
 	for rows.Next() {
 		err = rows.Scan(&tag.id, &tag.name)
 		if err != nil {

@@ -22,6 +22,7 @@ const schema = `
 		deleted_at DATE,
 		journal_id INTEGER NOT NULL REFERENCES journal(id) ON DELETE CASCADE
 	);
+	CREATE INDEX IF NOT EXISTS entry_journal_idx on entry (journal_id);
 
 	CREATE TABLE IF NOT EXISTS tag (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -1,59 +1,88 @@
 package main
 
-// import (
-// 	"fmt"
-// )
+import (
+	"database/sql"
+	"fmt"
+	"time"
+)
 
-// // Journal contains journal entries
-// type Journal struct {
-// 	name    string
-// 	entries []*Entry
-// }
+// Journal contains journal entries
+type Journal struct {
+	id        int64
+	deletedAt time.Time
+	createdAt time.Time
+	name      string
+	entries   []Entry
+}
 
-// // NewJournal creates a new journal
-// func NewJournal(name string) *Journal {
-// 	return &Journal{name: name, entries: make([]*Entry, 0, 8)}
-// }
+// JournalRepo provides journal CRUD operations
+type JournalRepo struct {
+	db        *sql.DB
+	entryRepo *EntryRepo
+}
 
-// // AddEntry addes an entry to journal
-// func (journal *Journal) AddEntry(input *EntryInput) *Entry {
-// 	entry := NewEntry(input)
+// MakeJournalRepo creates a new journal repository
+func MakeJournalRepo(db *sql.DB) *JournalRepo {
+	entryRepo := MakeEntryRepo(db)
+	journalRepo := &JournalRepo{db, entryRepo}
 
-// 	journal.entries = append(journal.entries, entry)
+	return journalRepo
+}
 
-// 	return entry
-// }
+// Create a new journal
+func (repo *JournalRepo) Create(name string) (int64, error) {
+	res, err := repo.db.Exec(`INSERT INTO journal (name, created_at) values(?, ?)`,
+		name, time.Now())
+	if err != nil {
+		return 0, err
+	}
 
-// // RemoveEntry removes an entry from journal
-// func (journal *Journal) RemoveEntry(id int) *Entry {
-// 	for _, entry := range journal.entries {
-// 		if entry.id == id {
-// 			return entry.SoftDeleteEntry()
-// 		}
-// 	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
 
-// 	return nil
-// }
+	return id, nil
+}
 
-// func (journal *Journal) String() string {
-// 	str := fmt.Sprintln("journal:")
+// Get journal
+func (repo *JournalRepo) Get(id int64) (*Journal, error) {
+	row := repo.db.QueryRow(`SELECT id, name, created_at FROM journal
+		WHERE id=? AND deleted_at IS NULL`, id)
 
-// 	for _, e := range journal.entries {
-// 		if e.IsEntryDeleted() {
-// 			continue
-// 		}
-// 		str = fmt.Sprintln(str, " entry:")
-// 		str = fmt.Sprintln(str, "   id:", e.id)
-// 		str = fmt.Sprintln(str, "   title:", e.title)
-// 		str = fmt.Sprintln(str, "   body:", e.body)
-// 		if e.mood != "" {
-// 			str = fmt.Sprintln(str, "   mood:", e.mood)
-// 		}
-// 		if e.tags != nil {
-// 			str = fmt.Sprintln(str, "   tags:", e.tags)
-// 		}
-// 		str = fmt.Sprintln(str, "   createdAt:", e.createdAt.Format("2006-01-02 15:04:05"))
-// 	}
+	j := &Journal{}
+	err := row.Scan(&j.id, &j.name, &j.createdAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
 
-// 	return str
-// }
+	j.entries, err = repo.entryRepo.GetByJournalID(j.id)
+	if err != nil {
+		return j, err
+	}
+
+	return j, nil
+}
+
+func (journal *Journal) String() string {
+	str := fmt.Sprintln("journal:")
+
+	for _, e := range journal.entries {
+		str = fmt.Sprintln(str, " entry:")
+		str = fmt.Sprintln(str, "   id:", e.id)
+		str = fmt.Sprintln(str, "   title:", e.title)
+		str = fmt.Sprintln(str, "   body:", e.body)
+		if e.mood != "" {
+			str = fmt.Sprintln(str, "   mood:", e.mood)
+		}
+		if e.tags != nil {
+			str = fmt.Sprintln(str, "   tags:", e.tags)
+		}
+		str = fmt.Sprintln(str, "   createdAt:", e.createdAt.Format("2006-01-02 15:04:05"))
+	}
+
+	return str
+}

@@ -21,7 +21,7 @@ func Setup(t *testing.T) (*sql.DB, func()) {
 		INSERT INTO entry (journal_id, title, body, mood, created_at) 
 			values(1, "testTitle2", "testBody2", "testMood2", "2020-01-02");
 		INSERT INTO entry (journal_id, title, body, mood, created_at) 
-			values(1, "testTitl3", "testBody3", "testMood3", "2020-01-03");
+			values(1, "testTitle3", "testBody3", "testMood3", "2020-01-03");
 		INSERT INTO entry (journal_id, title, body, mood, created_at) 
 			values(1, "testTitle4", "testBody4", "testMood4", "2020-01-04");
 		INSERT INTO entry (journal_id, title, body, mood, created_at) 
