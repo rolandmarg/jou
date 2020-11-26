@@ -80,3 +80,33 @@ func TestCreateJournal(t *testing.T) {
 		t.Fatalf("Expected name %v received %v", "test", j.name)
 	}
 }
+
+func TestRemoveJournal(t *testing.T) {
+	db, Teardown := Setup(t)
+	defer Teardown()
+
+	repo := MakeJournalRepo(db)
+
+	id, err := repo.Create("testJ")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = repo.Get(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = repo.Remove(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	j, err := repo.Get(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if j != nil {
+		t.Fatal("Expected journal not to exist")
+	}
+}

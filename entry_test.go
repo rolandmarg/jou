@@ -141,3 +141,37 @@ func TestCreateEntry(t *testing.T) {
 		}
 	}
 }
+
+func TestRemoveEntry(t *testing.T) {
+	db, Teardown := Setup(t)
+	defer Teardown()
+
+	repo := MakeEntryRepo(db)
+
+	journalID := int64(1)
+	i := &EntryInput{title: "absolutelyRandomTitle", body: "absolutely random body",
+		mood: "notsomuch", tags: []string{"randomtag1", "randomtag2"}}
+
+	id, err := repo.Create(journalID, i)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = repo.Get(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = repo.Remove(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	entry, err := repo.Get(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if entry != nil {
+		t.Fatal("Expected entry not to exist")
+	}
+}

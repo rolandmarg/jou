@@ -150,20 +150,12 @@ func (repo *EntryRepo) GetByJournalID(id int64) ([]Entry, error) {
 	return entries, nil
 }
 
-// Remove a journal entry, returns true or false if rows are affected
-func (repo *EntryRepo) Remove(entryID int64) (bool, error) {
-	res, err := repo.db.Exec(`UPDATE entry SET deleted_at=? WHERE id=?`, time.Now(), entryID)
+// Remove journal entry
+func (repo *EntryRepo) Remove(id int64) error {
+	_, err := repo.db.Exec(`UPDATE entry SET deleted_at=? WHERE id=?`, time.Now(), id)
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	numAffected, err := res.RowsAffected()
-	if err != nil {
-		return false, err
-	}
-	if numAffected == 0 {
-		return false, nil
-	}
-
-	return true, nil
+	return nil
 }

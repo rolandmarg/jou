@@ -94,6 +94,8 @@ add optional data encryption in db
 add pincode on journal
 add backups periodically
 add geolocation
+add audio to autoplay during specific entry
+add beautiful elements/ornaments for each entry customization
 
 Actions
 	journal

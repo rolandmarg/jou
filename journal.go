@@ -47,6 +47,8 @@ func (repo *JournalRepo) Create(name string) (int64, error) {
 
 // Get journal
 func (repo *JournalRepo) Get(id int64) (*Journal, error) {
+	// TODO possibly get journal and entries in 1 sql statement
+	// or use goroutines
 	row := repo.db.QueryRow(`SELECT id, name, created_at FROM journal
 		WHERE id=? AND deleted_at IS NULL`, id)
 
@@ -65,6 +67,25 @@ func (repo *JournalRepo) Get(id int64) (*Journal, error) {
 	}
 
 	return j, nil
+}
+
+// Update journal name
+func (repo *JournalRepo) Update(id int64, name string) error {
+	_, err := repo.db.Exec(`UPDATE journal SET name=? WHERE id=?`, name, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Remove journal
+func (repo *JournalRepo) Remove(id int64) error {
+	_, err := repo.db.Exec(`UPDATE journal SET deleted_at=? WHERE id=?`, time.Now(), id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (journal *Journal) String() string {
