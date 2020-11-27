@@ -2,17 +2,33 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"testing"
 )
 
+func openDB(name string) (DB *sql.DB, err error) {
+	file := fmt.Sprintf("file:%v.db?cache=shared&mode=memory", name)
+	DB, err = sql.Open("sqlite3", file)
+	if err != nil {
+		return
+	}
+
+	_, err = DB.Exec(Schema)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 func Setup(t *testing.T) (*sql.DB, func()) {
-	db, err := OpenTestDB(t.Name())
+	DB, err := openDB(t.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// TODO maybe generate random data
-	_, err = db.Exec(`
+	_, err = DB.Exec(`
 		INSERT INTO journal (name, created_at) VALUES ("test", "2020-01-01");
 		INSERT INTO journal (name, created_at) VALUES ("test2", "2020-01-02");
 		
@@ -48,7 +64,7 @@ func Setup(t *testing.T) (*sql.DB, func()) {
 		t.Error(err)
 	}
 
-	return db, func() {
-		db.Close()
+	return DB, func() {
+		DB.Close()
 	}
 }
