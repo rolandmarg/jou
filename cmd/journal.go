@@ -24,7 +24,7 @@ func journalGet(args []string) {
 		os.Exit(1)
 	}
 	if j == nil {
-		s := fmt.Sprintf(`Journal %v not found`, args[0])
+		s := fmt.Sprintf(`Journal "%v" not found`, args[0])
 		fmt.Println(s)
 		os.Exit(0)
 	}
@@ -48,7 +48,7 @@ func journalCreate(args []string) {
 		os.Exit(1)
 	}
 
-	s := fmt.Sprintf(`Journal %v created`, args[0])
+	s := fmt.Sprintf(`Journal "%v" created`, args[0])
 	fmt.Println(s)
 }
 
@@ -68,7 +68,7 @@ func journalRemove(args []string) {
 		os.Exit(1)
 	}
 
-	s := fmt.Sprintf(`Journal %v created`, args[0])
+	s := fmt.Sprintf(`Journal "%v" created`, args[0])
 	fmt.Println(s)
 }
 
@@ -138,7 +138,7 @@ func journalSetDefault(args []string) {
 		os.Exit(1)
 	}
 
-	s := fmt.Sprintf(`Journal %v set as default`, args[0])
+	s := fmt.Sprintf(`Journal "%v" set as default`, args[0])
 	fmt.Println(s)
 }
 
@@ -158,6 +158,6 @@ func journalUpdate(args []string) {
 		os.Exit(1)
 	}
 
-	s := fmt.Sprintf(`Journal %v renamed to %v`, args[0], args[1])
+	s := fmt.Sprintf(`Journal "%v" renamed to "%v"`, args[0], args[1])
 	fmt.Println(s)
 }
