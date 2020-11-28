@@ -1,28 +1,17 @@
-package main
+package fixture
 
 import (
 	"database/sql"
 	"fmt"
 	"testing"
+
+	"github.com/rolandmarg/jou/internal/platform/sqlite"
 )
 
-func openDB(name string) (DB *sql.DB, err error) {
-	file := fmt.Sprintf("file:%v.db?cache=shared&mode=memory", name)
-	DB, err = sql.Open("sqlite3", file)
-	if err != nil {
-		return
-	}
-
-	_, err = DB.Exec(Schema)
-	if err != nil {
-		return
-	}
-
-	return
-}
-
+// Setup initializes database with fixture data and returns DB, teardown func
 func Setup(t *testing.T) (*sql.DB, func()) {
-	DB, err := openDB(t.Name())
+	name := fmt.Sprintf("file:%v.db?cache=shared&mode=memory", t.Name())
+	DB, err := sqlite.Open(name)
 	if err != nil {
 		t.Fatal(err)
 	}
