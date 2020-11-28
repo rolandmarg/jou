@@ -11,7 +11,7 @@ import (
 type Journal struct {
 	ID        int64
 	Name      string
-	Notes   []note.Note
+	Notes     []note.Note
 	CreatedAt time.Time
 }
 
@@ -26,7 +26,7 @@ type Service interface {
 	Remove(name string) error
 }
 
-func (j *Journal) String() string {
+func (j Journal) String() string {
 	str := fmt.Sprintln("journal", j.Name)
 
 	str = fmt.Sprint(str, "notes: [")
