@@ -2,7 +2,6 @@ package sqlite
 
 import (
 	"database/sql"
-	"time"
 
 	// import sqlite3 driver
 	_ "github.com/mattn/go-sqlite3"
@@ -11,7 +10,7 @@ import (
 const schema = `
 	CREATE TABLE IF NOT EXISTS journal (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		name VARCHAR(64) NOT NULL,
+		name VARCHAR(128) NOT NULL,
 		created_at DATE NOT NULL,
 		deleted_at DATE,
 		UNIQUE(name)
@@ -24,15 +23,21 @@ const schema = `
 		mood VARCHAR(64),
 		created_at DATE NOT NULL,
 		deleted_at DATE,
-		journal_id INTEGER NOT NULL REFERENCES journal(id) ON DELETE CASCADE
+		j_id INTEGER NOT NULL REFERENCES journal(id) ON DELETE CASCADE
 	);
-	CREATE INDEX IF NOT EXISTS note_journal_idx on note (journal_id);
+	CREATE INDEX IF NOT EXISTS note_j_idx on note (j_id);
 
 	CREATE TABLE IF NOT EXISTS tag (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		name VARCHAR(64) NOT NULL,
 		note_id INTEGER NOT NULL REFERENCES note(id) ON DELETE CASCADE,
 		UNIQUE(note_id, name)
+	);
+
+	CREATE TABLE IF NOT EXISTS default_journal (
+		name VARCHAR(64),
+		j_id INTEGER NOT NULL REFERENCES journal(id) ON DELETE CASCADE,
+		UNIQUE(name)
 	);
 
 	CREATE TABLE IF NOT EXISTS env (
@@ -63,32 +68,6 @@ func OpenDB() (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	tx, err := db.Begin()
-	if err != nil {
-		return db, err
-	}
-	defer tx.Rollback()
-
-	_, err = tx.Exec(`
-		INSERT INTO journal (name, created_at)
-		SELECT ?, ?
-		WHERE NOT EXISTS (SELECT * FROM journal)
-	`, "default", time.Now())
-	if err != nil {
-		return db, err
-	}
-
-	_, err = tx.Exec(`
-		INSERT INTO env (key, value)
-		SELECT ?, ?
-		WHERE NOT EXISTS (SELECT * FROM env WHERE key=?)
-	`, "default_journal", "default", "default_journal")
-	if err != nil {
-		return db, err
-	}
-
-	tx.Commit()
 
 	return db, nil
 }

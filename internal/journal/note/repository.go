@@ -19,12 +19,12 @@ func MakeRepository(db *sql.DB) Service {
 
 func (r *repository) Get(id int64) (*Note, error) {
 	row := r.db.QueryRow(`
-		SELECT n.ID, n.journal_id, n.title, n.body, n.mood, n.created_at, GROUP_CONCAT(t.name)
+		SELECT n.id, n.j_id, n.title, n.body, n.mood, n.created_at, GROUP_CONCAT(t.name)
 		FROM note n
-		LEFT JOIN tag t ON n.ID = t.note_id
-		WHERE n.ID=?
+		LEFT JOIN tag t ON n.id = t.note_id
+		WHERE n.id=?
 			AND n.deleted_at IS NULL
-		GROUP BY n.ID`,
+		GROUP BY n.id`,
 		id)
 
 	n := &Note{}
@@ -51,12 +51,12 @@ func (r *repository) Get(id int64) (*Note, error) {
 
 func (r *repository) GetByJournalID(id int64) ([]Note, error) {
 	rows, err := r.db.Query(`
-		SELECT n.ID, n.title, n.body, n.mood, n.created_at, GROUP_CONCAT(t.name)
+		SELECT n.id, n.title, n.body, n.mood, n.created_at, GROUP_CONCAT(t.name)
 		FROM note n
-		LEFT JOIN tag t ON n.ID = t.note_id
-		WHERE n.journal_id=?
+		LEFT JOIN tag t ON n.id = t.note_id
+		WHERE n.j_id=?
 			AND n.deleted_at IS NULL
-		GROUP BY n.ID`,
+		GROUP BY n.id`,
 		id)
 	if err != nil {
 		return nil, err
@@ -98,7 +98,7 @@ func (r *repository) Create(n *Note) (int64, error) {
 	n.CreatedAt = time.Now()
 
 	res, err := tx.Exec(
-		`INSERT INTO note (journal_id, title, body, mood, created_at) VALUES (?, ?, ?, ?, ?)`,
+		`INSERT INTO note (j_id, title, body, mood, created_at) VALUES (?, ?, ?, ?, ?)`,
 		n.JournalID, n.Title, n.Body, n.Mood, n.CreatedAt)
 	if err != nil {
 		return 0, err

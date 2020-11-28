@@ -27,9 +27,7 @@ type Service interface {
 }
 
 func (j Journal) String() string {
-	str := fmt.Sprintln("journal", j.Name)
-
-	str = fmt.Sprint(str, "notes: [")
+	str := fmt.Sprintf(`journal "%v" notes: [`, j.Name)
 	for _, e := range j.Notes {
 		str = fmt.Sprintln(str, " note:")
 		str = fmt.Sprintln(str, "   id:", e.ID)

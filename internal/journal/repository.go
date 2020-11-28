@@ -5,20 +5,17 @@ import (
 	"time"
 
 	"github.com/rolandmarg/jou/internal/journal/note"
-	"github.com/rolandmarg/jou/internal/pkg/kvstore"
 )
 
 type repository struct {
 	db *sql.DB
 	es note.Service
-	ks kvstore.Service
 }
 
 // MakeRepository is a database bridge for journal
 func MakeRepository(db *sql.DB) Service {
 	es := note.MakeRepository(db)
-	ks := kvstore.MakeRepository(db)
-	r := &repository{db, es, ks}
+	r := &repository{db, es}
 
 	return r
 }
@@ -77,21 +74,36 @@ func (r *repository) Get(name string) (*Journal, error) {
 }
 
 func (r *repository) GetDefault() (*Journal, error) {
-	name, err := r.ks.Get("default_journal")
+	row := r.db.QueryRow(`
+		SELECT j.id, j.name, j.created_at
+		FROM journal j
+		JOIN default_journal d ON j.id = d.j_id
+		WHERE j.deleted_at IS NULL
+		`)
+
+	j := &Journal{}
+	err := row.Scan(&j.ID, &j.Name, &j.CreatedAt)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, err
 	}
 
-	j, err := r.Get(name)
+	j.Notes, err = r.es.GetByJournalID(j.ID)
 	if err != nil {
-		return nil, err
+		return j, err
 	}
 
 	return j, nil
 }
 
 func (r *repository) SetDefault(name string) error {
-	err := r.ks.Set("default_journal", name)
+	_, err := r.db.Exec(`
+		REPLACE INTO default_journal (name, j_id)
+		SELECT ?, id FROM journal
+		WHERE name = ?`,
+		"default", name)
 	if err != nil {
 		return err
 	}

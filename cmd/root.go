@@ -14,12 +14,14 @@ var rootCMD = &cobra.Command{
 }
 
 var addJFlag bool
+var addDFlag bool
 var addCMD = &cobra.Command{
 	Use:   "add",
 	Args:  cobra.ExactArgs(1),
 	Short: "Add a note or journal",
-	Long: `Add a note or journal. Flags: [-j(--journal), -n(--note)] 
-	Examples: jou add "my note", jou add -n "Everything's fine", jou add -j myJournal`,
+	Long: `Add a note or journal, specify -dj in conjunction for creating default journal. 
+Flags: [-j(--journal), -d(--default), -n(--note)] 
+Examples: jou add "my note", jou add -n "Everything's fine", jou add -j myJournal, jou add -dj myDefaultJou`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if addJFlag {
 			journalCreate(args)
@@ -76,6 +78,8 @@ var listCMD = &cobra.Command{
 func Execute() {
 	rootCMD.AddCommand(addCMD)
 	addCMD.Flags().BoolVarP(&addJFlag, "journal", "j", false, "use to add journal")
+	// TODO print warning if -d used without j
+	addCMD.Flags().BoolVarP(&addDFlag, "default", "d", false, "use to add journal as default")
 	rootCMD.AddCommand(useCMD)
 	rootCMD.AddCommand(listCMD)
 	rootCMD.AddCommand(removeCMD)
