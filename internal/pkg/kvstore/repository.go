@@ -3,18 +3,18 @@ package kvstore
 import "database/sql"
 
 type repository struct {
-	DB *sql.DB
+	db *sql.DB
 }
 
 // MakeRepository creates a key-value repository
-func MakeRepository(DB *sql.DB) Service {
-	r := &repository{DB}
+func MakeRepository(db *sql.DB) Service {
+	r := &repository{db}
 
 	return r
 }
 
 func (r *repository) Get(key string) (string, error) {
-	row := r.DB.QueryRow(`SELECT value FROM env WHERE name = ?`, key)
+	row := r.db.QueryRow(`SELECT value FROM env WHERE key = ?`, key)
 
 	var value string
 	err := row.Scan(&value)
@@ -26,7 +26,7 @@ func (r *repository) Get(key string) (string, error) {
 }
 
 func (r *repository) Set(key string, value string) error {
-	_, err := r.DB.Exec(`REPLACE INTO env (name, value) VALUES (?, ?)`, key, value)
+	_, err := r.db.Exec(`REPLACE INTO env (key, value) VALUES (?, ?)`, key, value)
 	if err != nil {
 		return err
 	}

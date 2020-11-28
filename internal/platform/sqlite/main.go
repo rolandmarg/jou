@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"database/sql"
+	"time"
 
 	// import sqlite3 driver
 	_ "github.com/mattn/go-sqlite3"
@@ -35,9 +36,9 @@ const schema = `
 	);
 
 	CREATE TABLE IF NOT EXISTS env (
-		name VARCHAR(128) NOT NULL,
+		key VARCHAR(128) NOT NULL,
 		value TEXT NOT NULL,
-		UNIQUE(name)
+		UNIQUE(key)
 	);
 `
 
@@ -54,4 +55,40 @@ func Open(name string) (*sql.DB, error) {
 	}
 
 	return DB, nil
+}
+
+// OpenDB is a helper function that opens and populates production database
+func OpenDB() (*sql.DB, error) {
+	db, err := Open("jou.db")
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return db, err
+	}
+	defer tx.Rollback()
+
+	_, err = tx.Exec(`
+		INSERT INTO journal (name, created_at)
+		SELECT ?, ?
+		WHERE NOT EXISTS (SELECT * FROM journal)
+	`, "default", time.Now())
+	if err != nil {
+		return db, err
+	}
+
+	_, err = tx.Exec(`
+		INSERT INTO env (key, value)
+		SELECT ?, ?
+		WHERE NOT EXISTS (SELECT * FROM env WHERE key=?)
+	`, "default_journal", "default", "default_journal")
+	if err != nil {
+		return db, err
+	}
+
+	tx.Commit()
+
+	return db, nil
 }
