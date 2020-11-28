@@ -17,7 +17,7 @@ const schema = `
 		UNIQUE(name)
 	);
 
-	CREATE TABLE IF NOT EXISTS entry (
+	CREATE TABLE IF NOT EXISTS note (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		title VARCHAR(128) NOT NULL,
 		body TEXT,
@@ -26,13 +26,13 @@ const schema = `
 		deleted_at DATE,
 		journal_id INTEGER NOT NULL REFERENCES journal(id) ON DELETE CASCADE
 	);
-	CREATE INDEX IF NOT EXISTS entry_journal_idx on entry (journal_id);
+	CREATE INDEX IF NOT EXISTS note_journal_idx on note (journal_id);
 
 	CREATE TABLE IF NOT EXISTS tag (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		name VARCHAR(64) NOT NULL,
-		entry_id INTEGER NOT NULL REFERENCES entry(id) ON DELETE CASCADE,
-		UNIQUE(entry_id, name)
+		note_id INTEGER NOT NULL REFERENCES note(id) ON DELETE CASCADE,
+		UNIQUE(note_id, name)
 	);
 
 	CREATE TABLE IF NOT EXISTS env (

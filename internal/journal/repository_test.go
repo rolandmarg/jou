@@ -26,31 +26,31 @@ func TestGet(t *testing.T) {
 	if j.Name[:len("test")] != "test" {
 		t.Fatalf("Expected name %v received %v", "test", j.Name)
 	}
-	if len(j.Entries) < 2 {
-		t.Fatal("Expected to have entries")
+	if len(j.Notes) < 2 {
+		t.Fatal("Expected to have notes")
 	}
-	for _, e := range j.Entries {
-		if e.ID < 1 {
-			t.Fatal("Expected entry ID to be positive")
+	for _, n := range j.Notes {
+		if n.ID < 1 {
+			t.Fatal("Expected note ID to be positive")
 		}
-		if e.JournalID != j.ID {
-			t.Fatalf("Expected journalID %v received %v ", j.ID, e.JournalID)
+		if n.JournalID != j.ID {
+			t.Fatalf("Expected journalID %v received %v ", j.ID, n.JournalID)
 		}
-		if e.Title[:len("testTitle")] != "testTitle" {
-			t.Fatalf("Expected title to start with %v received %v", "testTitle", e.Title)
+		if n.Title[:len("testTitle")] != "testTitle" {
+			t.Fatalf("Expected title to start with %v received %v", "testTitle", n.Title)
 		}
-		if e.Body[:len("testBody")] != "testBody" {
-			t.Fatalf("Expected body to start with %v received %v", "testBody", e.Body)
+		if n.Body[:len("testBody")] != "testBody" {
+			t.Fatalf("Expected body to start with %v received %v", "testBody", n.Body)
 		}
-		if e.Mood[:len("testMood")] != "testMood" {
-			t.Fatalf("Expected mood to start with %v received %v", "testMood", e.Mood)
+		if n.Mood[:len("testMood")] != "testMood" {
+			t.Fatalf("Expected mood to start with %v received %v", "testMood", n.Mood)
 		}
-		if e.CreatedAt.IsZero() == true {
+		if n.CreatedAt.IsZero() == true {
 			t.Fatal("Expected createdAt to be set")
 		}
-		for _, tag := range e.Tags {
+		for _, tag := range n.Tags {
 			if tag[:len("testTag")] != "testTag" {
-				t.Fatalf("Expected tag name %v to start with %v %v", e.Tags[0], "testTag", e.Title)
+				t.Fatalf("Expected tag name %v to start with %v %v", n.Tags[0], "testTag", n.Title)
 			}
 		}
 	}

@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/rolandmarg/jou/internal/journal/entry"
+	"github.com/rolandmarg/jou/internal/journal/note"
 )
 
 // Journal structure
 type Journal struct {
 	ID        int64
 	Name      string
-	Entries   []entry.Entry
+	Notes   []note.Note
 	CreatedAt time.Time
 }
 
@@ -29,9 +29,9 @@ type Service interface {
 func (j *Journal) String() string {
 	str := fmt.Sprintln("journal", j.Name)
 
-	str = fmt.Sprint(str, "entries: [")
-	for _, e := range j.Entries {
-		str = fmt.Sprintln(str, " entry:")
+	str = fmt.Sprint(str, "notes: [")
+	for _, e := range j.Notes {
+		str = fmt.Sprintln(str, " note:")
 		str = fmt.Sprintln(str, "   id:", e.ID)
 		str = fmt.Sprintln(str, "   title:", e.Title)
 		str = fmt.Sprintln(str, "   body:", e.Body)

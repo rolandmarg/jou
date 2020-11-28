@@ -4,19 +4,19 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/rolandmarg/jou/internal/journal/entry"
+	"github.com/rolandmarg/jou/internal/journal/note"
 	"github.com/rolandmarg/jou/internal/pkg/kvstore"
 )
 
 type repository struct {
 	db *sql.DB
-	es entry.Service
+	es note.Service
 	ks kvstore.Service
 }
 
 // MakeRepository is a database bridge for journal
 func MakeRepository(db *sql.DB) Service {
-	es := entry.MakeRepository(db)
+	es := note.MakeRepository(db)
 	ks := kvstore.MakeRepository(db)
 	r := &repository{db, es, ks}
 
@@ -43,7 +43,7 @@ func (r *repository) GetAll() ([]Journal, error) {
 			return nil, err
 		}
 		// TODO fix n+1
-		j.Entries, err = r.es.GetByJournalID(j.ID)
+		j.Notes, err = r.es.GetByJournalID(j.ID)
 		if err != nil {
 			return journals, err
 		}
@@ -54,7 +54,7 @@ func (r *repository) GetAll() ([]Journal, error) {
 }
 
 func (r *repository) Get(name string) (*Journal, error) {
-	// TODO possibly get journal and entries in 1 sql statement
+	// TODO possibly get journal and notes in 1 sql statement
 	// or use goroutines
 	row := r.db.QueryRow(`SELECT id, created_at FROM journal
 		WHERE name = ? AND deleted_at IS NULL`, name)
@@ -68,7 +68,7 @@ func (r *repository) Get(name string) (*Journal, error) {
 		return nil, err
 	}
 
-	j.Entries, err = r.es.GetByJournalID(j.ID)
+	j.Notes, err = r.es.GetByJournalID(j.ID)
 	if err != nil {
 		return j, err
 	}
