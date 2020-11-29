@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/rolandmarg/jou/internal/app/journal"
 	"github.com/spf13/cobra"
 )
@@ -13,7 +16,10 @@ var beginCMD = &cobra.Command{
 	Long: `Begin a new journal, specify -d(--default) to make it default.
 Examples: jou begin books, jou begin -d mix`,
 	Run: func(cmd *cobra.Command, args []string) {
-		journal.Connect().Create(args[0], beginDFlag)
+		if err := journal.Connect().Create(args[0], beginDFlag); err != nil {
+			fmt.Fprintln(os.Stderr, err)       
+			os.Exit(1)
+		}
 	},
 }
 
