@@ -1,4 +1,4 @@
-package note
+package sqlite
 
 import (
 	"testing"
@@ -97,11 +97,13 @@ func TestCreate(t *testing.T) {
 
 	r := MakeRepository(DB)
 
-	JournalID := int64(1)
-	note := &Note{JournalID: JournalID, Title: "absolutelyRandomTitle", Body: "absolutely random Body",
-		Mood: "notsomuch", Tags: []string{"randomtag1", "randomtag2"}}
+	journalID := int64(1)
+	title := "absolutelyRandomTitle"
+	body := "absolutely random body"
+	mood := "not so much"
+	tags := []string{"randomTag1", "randomTag2"}
 
-	noteID, err := r.Create(note)
+	noteID, err := r.Create(journalID, title, body, mood, tags)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -119,27 +121,27 @@ func TestCreate(t *testing.T) {
 	if n.ID < 1 {
 		t.Fatal("Expected note ID to be positive")
 	}
-	if n.JournalID != JournalID {
-		t.Fatalf("Expected JournalID %v received %v", JournalID, n.JournalID)
+	if n.JournalID != journalID {
+		t.Fatalf("Expected JournalID %v received %v", journalID, n.JournalID)
 	}
-	if n.Title != note.Title {
-		t.Fatalf("Expected Title %v received %v", note.Title, n.Title)
+	if n.Title != title {
+		t.Fatalf("Expected Title %v received %v", title, n.Title)
 	}
-	if n.Body != note.Body {
-		t.Fatalf("Expected Body %v received %v", note.Body, n.Body)
+	if n.Body != body {
+		t.Fatalf("Expected Body %v received %v", body, n.Body)
 	}
-	if n.Mood != note.Mood {
-		t.Fatalf("Expected Mood %v received %v", note.Mood, n.Mood)
+	if n.Mood != mood {
+		t.Fatalf("Expected Mood %v received %v", mood, n.Mood)
 	}
 	if n.CreatedAt.IsZero() == true {
 		t.Fatal("Expected CreatedAt to be set")
 	}
-	if len(n.Tags) != len(note.Tags) {
-		t.Fatalf("Expected Tags array len %v received %v", len(note.Tags), len(n.Tags))
+	if len(n.Tags) != len(tags) {
+		t.Fatalf("Expected Tags array len %v received %v", len(tags), len(n.Tags))
 	}
-	for IDx := range note.Tags {
-		if n.Tags[IDx] != note.Tags[IDx] {
-			t.Fatalf("Expected tag name %v received %v", note.Tags[IDx], n.Tags[IDx])
+	for IDx := range tags {
+		if n.Tags[IDx] != tags[IDx] {
+			t.Fatalf("Expected tag name %v received %v", tags[IDx], n.Tags[IDx])
 		}
 	}
 }
@@ -150,26 +152,28 @@ func TestRemove(t *testing.T) {
 
 	r := MakeRepository(DB)
 
-	JournalID := int64(1)
-	note := &Note{JournalID: JournalID, Title: "absolutelyRandomTitle", Body: "absolutely random Body",
-		Mood: "notsomuch", Tags: []string{"randomtag1", "randomtag2"}}
+	journalID := int64(1)
+	title := "absolutelyRandomTitle"
+	body := "absolutely random body"
+	mood := "not so much"
+	tags := []string{"randomTag1", "randomTag2"}
 
-	ID, err := r.Create(note)
+	id, err := r.Create(journalID, title, body, mood, tags)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = r.Get(ID)
+	_, err = r.Get(id)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = r.Remove(ID)
+	err = r.Remove(id)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	n, err := r.Get(ID)
+	n, err := r.Get(id)
 	if err != nil {
 		t.Fatal(err)
 	}

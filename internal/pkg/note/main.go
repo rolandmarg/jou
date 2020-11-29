@@ -13,10 +13,10 @@ type Note struct {
 	CreatedAt time.Time
 }
 
-// Repository provides operations on DAL
+// Repository provideDAL
 type Repository interface {
-	Get(ID int64) (*Note, error)
-	GetByJournalID(ID int64) ([]Note, error)
+	Get(id int64) (*Note, error)
+	GetByJournalID(id int64) ([]Note, error)
 	Create(journalID int64, title, body, mood string, tags []string) (int64, error)
 	Remove(id int64) error
 }

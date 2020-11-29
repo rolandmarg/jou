@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/rolandmarg/jou/internal/journal"
+	"github.com/rolandmarg/jou/internal/app/journal"
 	"github.com/rolandmarg/jou/internal/platform/sqlite"
 )
 

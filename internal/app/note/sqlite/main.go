@@ -1,23 +1,25 @@
-package note
+package sqlite
 
 import (
 	"database/sql"
 	"strings"
 	"time"
+
+	"github.com/rolandmarg/jou/internal/pkg/note"
 )
 
 type repository struct {
 	db *sql.DB
 }
 
-// MakeRepository is a database bridge for note
-func MakeRepository(db *sql.DB) Service {
+// MakeRepository creates note repository
+func MakeRepository(db *sql.DB) note.Repository {
 	r := &repository{db}
 
 	return r
 }
 
-func (r *repository) Get(id int64) (*Note, error) {
+func (r *repository) Get(id int64) (*note.Note, error) {
 	row := r.db.QueryRow(`
 		SELECT n.id, n.j_id, n.title, n.body, n.mood, n.created_at, GROUP_CONCAT(t.name)
 		FROM note n
@@ -27,7 +29,7 @@ func (r *repository) Get(id int64) (*Note, error) {
 		GROUP BY n.id`,
 		id)
 
-	n := &Note{}
+	n := &note.Note{}
 	var body, mood, tags sql.NullString
 	err := row.Scan(&n.ID, &n.JournalID, &n.Title, &body, &mood, &n.CreatedAt, &tags)
 	if err != nil {
@@ -49,7 +51,7 @@ func (r *repository) Get(id int64) (*Note, error) {
 	return n, nil
 }
 
-func (r *repository) GetByJournalID(id int64) ([]Note, error) {
+func (r *repository) GetByJournalID(id int64) ([]note.Note, error) {
 	rows, err := r.db.Query(`
 		SELECT n.id, n.title, n.body, n.mood, n.created_at, GROUP_CONCAT(t.name)
 		FROM note n
@@ -62,9 +64,9 @@ func (r *repository) GetByJournalID(id int64) ([]Note, error) {
 		return nil, err
 	}
 
-	n := Note{JournalID: id}
+	n := note.Note{JournalID: id}
 	var body, mood, tags sql.NullString
-	var notes []Note
+	var notes []note.Note
 	for rows.Next() {
 		err := rows.Scan(&n.ID, &n.Title, &body, &mood, &n.CreatedAt, &tags)
 		if err != nil {
@@ -87,7 +89,7 @@ func (r *repository) GetByJournalID(id int64) ([]Note, error) {
 	return notes, nil
 }
 
-func (r *repository) Create(n *Note) (int64, error) {
+func (r *repository) Create(journalID int64, title, body, mood string, tags []string) (int64, error) {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return 0, err
@@ -95,23 +97,21 @@ func (r *repository) Create(n *Note) (int64, error) {
 	// TODO maybe handle rollback error
 	defer tx.Rollback()
 
-	n.CreatedAt = time.Now()
-
 	res, err := tx.Exec(
 		`INSERT INTO note (j_id, title, body, mood, created_at) VALUES (?, ?, ?, ?, ?)`,
-		n.JournalID, n.Title, n.Body, n.Mood, n.CreatedAt)
+		journalID, title, body, mood, time.Now())
 	if err != nil {
 		return 0, err
 	}
 
-	n.ID, err = res.LastInsertId()
+	id, err := res.LastInsertId()
 	if err != nil {
 		return 0, err
 	}
 
-	for _, tag := range n.Tags {
+	for _, tag := range tags {
 		// TODO maybe create tags in goroutine
-		_, err = tx.Exec(`INSERT INTO tag (name, note_id) VALUES (?, ?)`, tag, n.ID)
+		_, err = tx.Exec(`INSERT INTO tag (name, note_id) VALUES (?, ?)`, tag, id)
 		if err != nil {
 			return 0, err
 		}
@@ -122,7 +122,7 @@ func (r *repository) Create(n *Note) (int64, error) {
 		return 0, err
 	}
 
-	return n.ID, nil
+	return id, nil
 }
 
 func (r *repository) Remove(id int64) error {

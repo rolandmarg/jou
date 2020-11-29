@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/rolandmarg/jou/internal/journal/note"
+	"github.com/rolandmarg/jou/internal/pkg/note"
 )
 
 // Journal structure
@@ -15,8 +15,8 @@ type Journal struct {
 	CreatedAt time.Time
 }
 
-// Service provides operations on journal
-type Service interface {
+// Repository provides operations on journal DAL
+type Repository interface {
 	Get(name string) (*Journal, error)
 	GetDefault() (*Journal, error)
 	GetAll() ([]Journal, error)

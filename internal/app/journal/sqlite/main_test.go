@@ -1,4 +1,4 @@
-package journal
+package sqlite
 
 import (
 	"testing"
@@ -25,34 +25,6 @@ func TestGet(t *testing.T) {
 	}
 	if j.Name[:len("test")] != "test" {
 		t.Fatalf("Expected name %v received %v", "test", j.Name)
-	}
-	if len(j.Notes) < 2 {
-		t.Fatal("Expected to have notes")
-	}
-	for _, n := range j.Notes {
-		if n.ID < 1 {
-			t.Fatal("Expected note ID to be positive")
-		}
-		if n.JournalID != j.ID {
-			t.Fatalf("Expected journalID %v received %v ", j.ID, n.JournalID)
-		}
-		if n.Title[:len("testTitle")] != "testTitle" {
-			t.Fatalf("Expected title to start with %v received %v", "testTitle", n.Title)
-		}
-		if n.Body[:len("testBody")] != "testBody" {
-			t.Fatalf("Expected body to start with %v received %v", "testBody", n.Body)
-		}
-		if n.Mood[:len("testMood")] != "testMood" {
-			t.Fatalf("Expected mood to start with %v received %v", "testMood", n.Mood)
-		}
-		if n.CreatedAt.IsZero() == true {
-			t.Fatal("Expected createdAt to be set")
-		}
-		for _, tag := range n.Tags {
-			if tag[:len("testTag")] != "testTag" {
-				t.Fatalf("Expected tag name %v to start with %v %v", n.Tags[0], "testTag", n.Title)
-			}
-		}
 	}
 }
 

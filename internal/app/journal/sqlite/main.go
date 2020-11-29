@@ -1,26 +1,24 @@
-package journal
+package sqlite
 
 import (
 	"database/sql"
 	"time"
 
-	"github.com/rolandmarg/jou/internal/journal/note"
+	"github.com/rolandmarg/jou/internal/pkg/journal"
 )
 
 type repository struct {
 	db *sql.DB
-	es note.Service
 }
 
-// MakeRepository is a database bridge for journal
-func MakeRepository(db *sql.DB) Service {
-	es := note.MakeRepository(db)
-	r := &repository{db, es}
+// MakeRepository creates journal repository
+func MakeRepository(db *sql.DB) journal.Repository {
+	r := &repository{db}
 
 	return r
 }
 
-func (r *repository) GetAll() ([]Journal, error) {
+func (r *repository) GetAll() ([]journal.Journal, error) {
 	// TODO add pagination
 	rows, err := r.db.Query(`SELECT id, name, created_at FROM journal
 	WHERE deleted_at IS NULL`)
@@ -28,8 +26,8 @@ func (r *repository) GetAll() ([]Journal, error) {
 		return nil, err
 	}
 
-	j := Journal{}
-	var journals []Journal
+	j := journal.Journal{}
+	var journals []journal.Journal
 
 	for rows.Next() {
 		err := rows.Scan(&j.ID, &j.Name, &j.CreatedAt)
@@ -39,24 +37,17 @@ func (r *repository) GetAll() ([]Journal, error) {
 			}
 			return nil, err
 		}
-		// TODO fix n+1
-		j.Notes, err = r.es.GetByJournalID(j.ID)
-		if err != nil {
-			return journals, err
-		}
 		journals = append(journals, j)
 	}
 
 	return journals, nil
 }
 
-func (r *repository) Get(name string) (*Journal, error) {
-	// TODO possibly get journal and notes in 1 sql statement
-	// or use goroutines
+func (r *repository) Get(name string) (*journal.Journal, error) {
 	row := r.db.QueryRow(`SELECT id, created_at FROM journal
 		WHERE name = ? AND deleted_at IS NULL`, name)
 
-	j := &Journal{Name: name}
+	j := &journal.Journal{Name: name}
 	err := row.Scan(&j.ID, &j.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -65,15 +56,10 @@ func (r *repository) Get(name string) (*Journal, error) {
 		return nil, err
 	}
 
-	j.Notes, err = r.es.GetByJournalID(j.ID)
-	if err != nil {
-		return j, err
-	}
-
 	return j, nil
 }
 
-func (r *repository) GetDefault() (*Journal, error) {
+func (r *repository) GetDefault() (*journal.Journal, error) {
 	row := r.db.QueryRow(`
 		SELECT j.id, j.name, j.created_at
 		FROM journal j
@@ -81,18 +67,13 @@ func (r *repository) GetDefault() (*Journal, error) {
 		WHERE j.deleted_at IS NULL
 		`)
 
-	j := &Journal{}
+	j := &journal.Journal{}
 	err := row.Scan(&j.ID, &j.Name, &j.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 		return nil, err
-	}
-
-	j.Notes, err = r.es.GetByJournalID(j.ID)
-	if err != nil {
-		return j, err
 	}
 
 	return j, nil
