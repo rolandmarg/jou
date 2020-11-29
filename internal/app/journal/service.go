@@ -20,6 +20,7 @@ func MakeService(j journal.Repository, n note.Repository) *Service {
 	return s
 }
 
+// Get journal by name
 func (s *Service) Get(name string) (*journal.Journal, error) {
 	j, err := s.j.Get(name)
 	if err != nil {
@@ -34,6 +35,7 @@ func (s *Service) Get(name string) (*journal.Journal, error) {
 	return j, nil
 }
 
+// GetAll journals
 func (s *Service) GetAll() ([]journal.Journal, error) {
 	journals, err := s.j.GetAll()
 	if err != nil {

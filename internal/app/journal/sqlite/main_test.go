@@ -1,160 +1,147 @@
 package sqlite
 
 import (
+	"fmt"
 	"testing"
 
-	"github.com/rolandmarg/jou/internal/pkg/fixture"
+	"github.com/rolandmarg/jou/internal/pkg/journal"
+	"github.com/rolandmarg/jou/internal/platform/sqlite"
 )
 
-func TestGet(t *testing.T) {
-	DB, Teardown := fixture.Setup(t)
-	defer Teardown()
+func setup(t *testing.T) (journal.Repository, func()) {
+	name := fmt.Sprintf("file:%v.db?cache=shared&mode=memory", t.Name())
+	db, e := sqlite.Open(name)
+	her(t, e)
 
-	r := MakeRepository(DB)
+	_, e = db.Exec(`
+		INSERT INTO journal (name, created_at) VALUES ("test", "2020-01-01");
+		INSERT INTO journal (name, created_at) VALUES ("test2", "2020-01-02");
+	`)
+	her(t, e)
+
+	r := MakeRepository(db)
+
+	return r, func() {
+		db.Close()
+	}
+}
+
+func her(t *testing.T, args ...interface{}) {
+	if len(args) != 0 && args[0] != nil {
+		t.Fatal(args...)
+	}
+}
+
+func TestGet(t *testing.T) {
+	r, teardown := setup(t)
+	defer teardown()
 
 	name := "test"
-	j, err := r.Get(name)
-	if err != nil {
-		t.Fatal(err)
-	}
+	j, e := r.Get(name)
+	her(t, e)
+
 	if j == nil {
-		t.Fatal("Expected to exist")
+		her(t, "Expected to exist")
 	}
 	if j.ID < 1 {
-		t.Fatal("Expected ID to be positive")
+		her(t, "Expected ID to be positive")
 	}
 	if j.Name[:len("test")] != "test" {
-		t.Fatalf("Expected name %v received %v", "test", j.Name)
+		her(t, "Expected name 'test' received ", j.Name)
 	}
 }
 
 func TestSetDefault(t *testing.T) {
-	DB, Teardown := fixture.Setup(t)
-	defer Teardown()
+	r, teardown := setup(t)
+	defer teardown()
 
-	r := MakeRepository(DB)
-
-	err := r.SetDefault("test")
-	if err != nil {
-		t.Fatal(err)
-	}
+	e := r.SetDefault("test")
+	her(t, e)
 }
 
 func TestGetDefault(t *testing.T) {
-	DB, Teardown := fixture.Setup(t)
-	defer Teardown()
+	r, teardown := setup(t)
+	defer teardown()
 
-	r := MakeRepository(DB)
+	e := r.SetDefault("test")
+	her(t, e)
 
-	err := r.SetDefault("test")
-	if err != nil {
-		t.Fatal(err)
-	}
+	j, e := r.GetDefault()
+	her(t, e)
 
-	j, err := r.GetDefault()
-	if err != nil {
-		t.Fatal(err)
-	}
 	if j.Name != "test" {
-		t.Fatalf("Expected default journal %v received %v", "test", j.Name)
+		her(t, "Expected default journal 'test' received ", j.Name)
 	}
 }
 
 func TestUpdate(t *testing.T) {
-	DB, Teardown := fixture.Setup(t)
-	defer Teardown()
+	r, teardown := setup(t)
+	defer teardown()
 
-	r := MakeRepository(DB)
+	_, e := r.Create("xutu")
+	her(t, e)
 
-	_, err := r.Create("xutu")
-	if err != nil {
-		t.Fatal(err)
-	}
+	e = r.Update("xutu", "butu")
+	her(t, e)
 
-	err = r.Update("xutu", "butu")
-	if err != nil {
-		t.Fatal(err)
-	}
+	j, e := r.Get("butu")
+	her(t, e)
 
-	j, err := r.Get("butu")
-	if err != nil {
-		t.Fatal(err)
-	}
-	j, err = r.Get("xutu")
-	if err != nil {
-		t.Fatal(err)
-	}
+	j, e = r.Get("xutu")
+	her(t, e)
+
 	if j != nil {
-		t.Fatal("Expected journal xutu not to exist")
+		her(t, "Expected journal xutu not to exist")
 	}
 }
 func TestCreate(t *testing.T) {
-	DB, Teardown := fixture.Setup(t)
-	defer Teardown()
+	r, teardown := setup(t)
+	defer teardown()
 
-	r := MakeRepository(DB)
+	_, e := r.Create("testJ")
+	her(t, e)
 
-	_, err := r.Create("testJ")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	j, err := r.Get("testJ")
-	if err != nil {
-		t.Fatal(err)
-	}
+	j, e := r.Get("testJ")
+	her(t, e)
 
 	if j == nil {
-		t.Fatal("Expected to exist")
+		her(t, "Expected to exist")
 	}
 	if j.Name != "testJ" {
-		t.Fatalf("Expected name %v received %v", "testJ", j.Name)
+		her(t, "Expected name 'testJ' received ", j.Name)
 	}
 }
 
 func TestCreateDuplicate(t *testing.T) {
-	DB, Teardown := fixture.Setup(t)
-	defer Teardown()
+	r, teardown := setup(t)
+	defer teardown()
 
-	r := MakeRepository(DB)
+	_, e := r.Create("dup")
+	her(t, e)
 
-	_, err := r.Create("dup")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	_, err = r.Create("dup")
-	if err == nil {
-		t.Fatal("Expected journal create to fail on duplicate name")
+	_, e = r.Create("dup")
+	if e == nil {
+		her(t, "Expected journal create to fail on duplicate name")
 	}
 }
 
 func TestRemove(t *testing.T) {
-	DB, Teardown := fixture.Setup(t)
-	defer Teardown()
+	r, teardown := setup(t)
+	defer teardown()
 
-	r := MakeRepository(DB)
+	_, e := r.Create("testJ")
+	her(t, e)
 
-	_, err := r.Create("testJ")
-	if err != nil {
-		t.Fatal(err)
-	}
+	_, e = r.Get("testJ")
+	her(t, e)
 
-	_, err = r.Get("testJ")
-	if err != nil {
-		t.Fatal(err)
-	}
+	e = r.Remove("testJ")
+	her(t, e)
 
-	err = r.Remove("testJ")
-	if err != nil {
-		t.Fatal(err)
-	}
+	j, e := r.Get("testJ")
+	her(t, e)
 
-	j, err := r.Get("testJ")
-	if err != nil {
-		t.Fatal(err)
-	}
 	if j != nil {
-		t.Fatal("Expected journal testJ not to exist")
+		her(t, "Expected journal testJ not to exist")
 	}
 }

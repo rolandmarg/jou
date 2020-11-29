@@ -1,101 +1,129 @@
 package sqlite
 
 import (
+	"fmt"
 	"testing"
 
-	"github.com/rolandmarg/jou/internal/pkg/fixture"
+	"github.com/rolandmarg/jou/internal/pkg/note"
+	"github.com/rolandmarg/jou/internal/platform/sqlite"
 )
 
-func TestGet(t *testing.T) {
-	DB, Teardown := fixture.Setup(t)
-	defer Teardown()
+func setup(t *testing.T) (note.Repository, func()) {
+	name := fmt.Sprintf("file:%v.db?cache=shared&mode=memory", t.Name())
+	db, e := sqlite.Open(name)
+	her(t, e)
 
-	r := MakeRepository(DB)
+	_, e = db.Exec(`
+		INSERT INTO note (j_id, title, body, mood, created_at) 
+			VALUES (1, "testTitle", "testBody", "testMood", "2020-01-01");
+		INSERT INTO note (j_id, title, body, mood, created_at) 
+			VALUES (1, "testTitle2", "testBody2", "testMood2", "2020-01-02");
+		INSERT INTO note (j_id, title, body, mood, created_at) 
+			VALUES (2, "testTitle3", "testBody3", "testMood3", "2020-01-03");
 
-	n, err := r.Get(1)
-	if err != nil {
-		t.Fatal(err)
+		INSERT INTO tag (name, note_id) VALUES ("testTag", 1);
+		INSERT INTO tag (name, note_id) VALUES ("testTag2", 1);
+		INSERT INTO tag (name, note_id) VALUES ("testTag", 2);
+		
+	`)
+	her(t, e)
+
+	r := MakeRepository(db)
+
+	return r, func() {
+		db.Close()
 	}
+}
+
+func her(t *testing.T, args ...interface{}) {
+	if len(args) != 0 && args[0] != nil {
+		t.Fatal(args...)
+	}
+}
+
+func TestGet(t *testing.T) {
+	r, teardown := setup(t)
+	defer teardown()
+
+	n, e := r.Get(1)
+	her(t, e)
+
 	if n == nil {
-		t.Fatal("Expected note to exist")
+		her(t, "Expected note to exist")
 	}
 	if n.ID < 1 {
-		t.Fatal("Expected note ID to be positive")
+		her(t, "Expected note ID to be positive")
 	}
 	if n.JournalID < 1 {
-		t.Fatal("Expected note JournalID to be positive")
+		her(t, "Expected note JournalID to be positive")
 	}
 	if n.Title != "testTitle" {
-		t.Fatalf("Expected Title %v received %v", "testTitle", n.Title)
+		her(t, "Expected Title 'testTitle' received ", n.Title)
 	}
 	if n.Body != "testBody" {
-		t.Fatalf("Expected Body %v received %v", "testBody", n.Body)
+		her(t, "Expected Body 'testBody' received ", n.Body)
 	}
 	if n.Mood != "testMood" {
-		t.Fatalf("Expected Mood %v received %v", "testMood", n.Mood)
+		her(t, "Expected Mood 'testMood' received ", n.Mood)
 	}
 	if n.CreatedAt.IsZero() == true {
-		t.Fatal("Expected CreatedAt to be set")
+		her(t, "Expected CreatedAt to be set")
 	}
 	if len(n.Tags) < 2 {
-		t.Fatal("Expected Tags to have elements")
+		her(t, "Expected Tags to have elements")
 	}
 	for _, tag := range n.Tags {
 		if tag[:len("testTag")] != "testTag" {
-			t.Fatalf("Expected tag name %v to start with %v", n.Tags[0], "testTag")
+			her(t, "Expected tag name to start with 'testTag' received ", n.Tags[0])
 		}
 	}
 }
 
 func TestGetByJournalID(t *testing.T) {
-	DB, Teardown := fixture.Setup(t)
-	defer Teardown()
+	r, teardown := setup(t)
+	defer teardown()
 
-	r := MakeRepository(DB)
-
-	JournalID := int64(1)
-	notes, err := r.GetByJournalID(JournalID)
-	if err != nil {
-		t.Fatal(err)
+	journalID := int64(1)
+	notes, e := r.GetByJournalID(journalID)
+	if e != nil {
+		her(t, e)
 	}
 	if notes == nil {
-		t.Fatal("Expected note to exist")
+		her(t, "Expected note to exist")
 	}
 	if len(notes) < 2 {
-		t.Fatal("Expected notes to have lements")
+		her(t, "Expected notes to have lements")
 	}
 	for _, n := range notes {
 		if n.ID < 1 {
-			t.Fatal("Expected note ID to be positive")
+			her(t, "Expected note ID to be positive")
 		}
-		if n.JournalID != JournalID {
-			t.Fatalf("Expected JournalID %v received %v ", JournalID, n.JournalID)
+		if n.JournalID != journalID {
+			her(t, "Expected JournalID", journalID, "received ", n.JournalID)
 		}
 		if n.Title[:len("testTitle")] != "testTitle" {
-			t.Fatalf("Expected Title to start with %v received %v", "testTitle", n.Title)
+			her(t, "Expected Title to start with 'testTitle' received ", n.Title)
 		}
 		if n.Body[:len("testBody")] != "testBody" {
-			t.Fatalf("Expected Body to start with %v received %v", "testBody", n.Body)
+			her(t, "Expected Body to start with 'testBody' received ", n.Body)
 		}
 		if n.Mood[:len("testMood")] != "testMood" {
-			t.Fatalf("Expected Mood to start with %v received %v", "testMood", n.Mood)
+			her(t, "Expected Mood to start with 'testMood' received ", n.Mood)
 		}
 		if n.CreatedAt.IsZero() == true {
-			t.Fatal("Expected CreatedAt to be set")
+			her(t, "Expected CreatedAt to be set")
 		}
 		for _, tag := range n.Tags {
 			if tag[:len("testTag")] != "testTag" {
-				t.Fatalf("Expected tag name %v to start with %v %v", n.Tags[0], "testTag", n.Title)
+				her(t, "Expected tag name to start with 'testTag' received ", n.Tags[0])
 			}
 		}
 	}
 }
 
 func TestCreate(t *testing.T) {
-	DB, Teardown := fixture.Setup(t)
-	defer Teardown()
-
-	r := MakeRepository(DB)
+	r, teardown := setup(t)
+	defer teardown()
 
 	journalID := int64(1)
 	title := "absolutelyRandomTitle"
@@ -103,54 +131,52 @@ func TestCreate(t *testing.T) {
 	mood := "not so much"
 	tags := []string{"randomTag1", "randomTag2"}
 
-	noteID, err := r.Create(journalID, title, body, mood, tags)
-	if err != nil {
-		t.Fatal(err)
+	noteID, e := r.Create(journalID, title, body, mood, tags)
+	if e != nil {
+		her(t, e)
 	}
 	if noteID < 1 {
-		t.Fatal("Expected note ID to be positive")
+		her(t, "Expected note ID to be positive")
 	}
 
-	n, err := r.Get(noteID)
-	if err != nil {
-		t.Fatal(err)
+	n, e := r.Get(noteID)
+	if e != nil {
+		her(t, e)
 	}
 	if n == nil {
-		t.Fatal("Expected note to exist")
+		her(t, "Expected note to exist")
 	}
 	if n.ID < 1 {
-		t.Fatal("Expected note ID to be positive")
+		her(t, "Expected note ID to be positive")
 	}
 	if n.JournalID != journalID {
-		t.Fatalf("Expected JournalID %v received %v", journalID, n.JournalID)
+		her(t, "Expected JournalID ", journalID, "received ", n.JournalID)
 	}
 	if n.Title != title {
-		t.Fatalf("Expected Title %v received %v", title, n.Title)
+		her(t, "Expected Title ", title, "received ", n.Title)
 	}
 	if n.Body != body {
-		t.Fatalf("Expected Body %v received %v", body, n.Body)
+		her(t, "Expected Body ", body, "received ", n.Body)
 	}
 	if n.Mood != mood {
-		t.Fatalf("Expected Mood %v received %v", mood, n.Mood)
+		her(t, "Expected Mood ", mood, "received ", n.Mood)
 	}
 	if n.CreatedAt.IsZero() == true {
-		t.Fatal("Expected CreatedAt to be set")
+		her(t, "Expected CreatedAt to be set")
 	}
 	if len(n.Tags) != len(tags) {
-		t.Fatalf("Expected Tags array len %v received %v", len(tags), len(n.Tags))
+		her(t, "Expected Tags array len ", len(tags), "received ", len(n.Tags))
 	}
 	for IDx := range tags {
 		if n.Tags[IDx] != tags[IDx] {
-			t.Fatalf("Expected tag name %v received %v", tags[IDx], n.Tags[IDx])
+			her(t, "Expected tag name ", tags[IDx], " received ", n.Tags[IDx])
 		}
 	}
 }
 
 func TestRemove(t *testing.T) {
-	DB, Teardown := fixture.Setup(t)
-	defer Teardown()
-
-	r := MakeRepository(DB)
+	r, teardown := setup(t)
+	defer teardown()
 
 	journalID := int64(1)
 	title := "absolutelyRandomTitle"
@@ -158,26 +184,26 @@ func TestRemove(t *testing.T) {
 	mood := "not so much"
 	tags := []string{"randomTag1", "randomTag2"}
 
-	id, err := r.Create(journalID, title, body, mood, tags)
-	if err != nil {
-		t.Fatal(err)
+	id, e := r.Create(journalID, title, body, mood, tags)
+	if e != nil {
+		her(t, e)
 	}
 
-	_, err = r.Get(id)
-	if err != nil {
-		t.Fatal(err)
+	_, e = r.Get(id)
+	if e != nil {
+		her(t, e)
 	}
 
-	err = r.Remove(id)
-	if err != nil {
-		t.Fatal(err)
+	e = r.Remove(id)
+	if e != nil {
+		her(t, e)
 	}
 
-	n, err := r.Get(id)
-	if err != nil {
-		t.Fatal(err)
+	n, e := r.Get(id)
+	if e != nil {
+		her(t, e)
 	}
 	if n != nil {
-		t.Fatal("Expected note not to exist")
+		her(t, "Expected note not to exist")
 	}
 }
