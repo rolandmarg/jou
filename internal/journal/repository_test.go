@@ -94,7 +94,7 @@ func TestUpdate(t *testing.T) {
 
 	r := MakeRepository(DB)
 
-	err := r.Create("xutu")
+	_, err := r.Create("xutu")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -122,7 +122,7 @@ func TestCreate(t *testing.T) {
 
 	r := MakeRepository(DB)
 
-	err := r.Create("testJ")
+	_, err := r.Create("testJ")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -140,13 +140,30 @@ func TestCreate(t *testing.T) {
 	}
 }
 
+func TestCreateDuplicate(t *testing.T) {
+	DB, Teardown := fixture.Setup(t)
+	defer Teardown()
+
+	r := MakeRepository(DB)
+
+	_, err := r.Create("dup")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = r.Create("dup")
+	if err == nil {
+		t.Fatal("Expected journal create to fail on duplicate name")
+	}
+}
+
 func TestRemove(t *testing.T) {
 	DB, Teardown := fixture.Setup(t)
 	defer Teardown()
 
 	r := MakeRepository(DB)
 
-	err := r.Create("testJ")
+	_, err := r.Create("testJ")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -32,7 +32,7 @@ func journalGet(args []string) {
 	fmt.Println(j)
 }
 
-func journalCreate(args []string) {
+func journalCreate(args []string, isDefault bool) {
 	db, err := sqlite.OpenDB()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -42,7 +42,7 @@ func journalCreate(args []string) {
 
 	r := journal.MakeRepository(db)
 
-	err = r.Create(args[0])
+	_, err = r.Create(args[0])
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -50,6 +50,14 @@ func journalCreate(args []string) {
 
 	s := fmt.Sprintf(`Journal "%v" created`, args[0])
 	fmt.Println(s)
+
+	if isDefault {
+		err = r.SetDefault(args[0])
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+	}
 }
 
 func journalRemove(args []string) {

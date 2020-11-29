@@ -111,14 +111,19 @@ func (r *repository) SetDefault(name string) error {
 	return nil
 }
 
-func (r *repository) Create(name string) error {
-	_, err := r.db.Exec(`INSERT INTO journal (name, created_at) VALUES (?, ?)`,
+func (r *repository) Create(name string) (int64, error) {
+	res, err := r.db.Exec(`INSERT INTO journal (name, created_at) VALUES (?, ?)`,
 		name, time.Now())
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return nil
+	id, err := res.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return id, err
 }
 
 func (r *repository) Update(oldName string, newName string) error {

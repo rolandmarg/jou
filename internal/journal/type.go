@@ -21,7 +21,7 @@ type Service interface {
 	GetDefault() (*Journal, error)
 	GetAll() ([]Journal, error)
 	SetDefault(name string) error
-	Create(name string) error
+	Create(name string) (int64, error)
 	Update(oldName string, newName string) error
 	Remove(name string) error
 }
