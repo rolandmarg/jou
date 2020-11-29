@@ -11,6 +11,7 @@ import (
 type Service struct {
 	j journal.Repository
 	n note.Repository
+	// TODO add custom logging for errors info and so on
 }
 
 // MakeService creates journal service
@@ -51,4 +52,21 @@ func (s *Service) GetAll() ([]journal.Journal, error) {
 	}
 
 	return journals, nil
+}
+
+// Create journal
+func (s *Service) Create(name string, isDefault bool) error {
+	_, err := s.j.Create(name)
+	if err != nil {
+		return fmt.Errorf(`Could not create journal: %w`, err)
+	}
+
+	if isDefault {
+		err = s.j.SetDefault(name)
+		if err != nil {
+			return fmt.Errorf(`Journal created, but could not set default: %w`, err)
+		}
+	}
+
+	return nil
 }
