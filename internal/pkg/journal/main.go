@@ -15,17 +15,6 @@ type Journal struct {
 	CreatedAt time.Time
 }
 
-// Repository provides operations on journal DAL
-type Repository interface {
-	Get(name string) (*Journal, error)
-	GetDefault() (*Journal, error)
-	GetAll() ([]Journal, error)
-	SetDefault(name string) error
-	Create(name string) (int64, error)
-	Update(oldName string, newName string) error
-	Remove(name string) error
-}
-
 func (j Journal) String() string {
 	str := fmt.Sprintf(`journal "%v" notes: [`, j.Name)
 	for _, e := range j.Notes {
@@ -44,4 +33,15 @@ func (j Journal) String() string {
 	str = fmt.Sprint(str, "]")
 
 	return str
+}
+
+// Repository provides operations on journal DAL
+type Repository interface {
+	Get(name string) (*Journal, error)
+	GetDefault() (*Journal, error)
+	GetAll() ([]Journal, error)
+	SetDefault(name string) error
+	Create(name string) (int64, error)
+	Update(oldName, newName string) error
+	Remove(name string) error
 }

@@ -1,6 +1,7 @@
 package journal
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/rolandmarg/jou/internal/pkg/journal"
@@ -25,12 +26,16 @@ func MakeService(j journal.Repository, n note.Repository) *Service {
 func (s *Service) Get(name string) (*journal.Journal, error) {
 	j, err := s.j.Get(name)
 	if err != nil {
-		return nil, fmt.Errorf(`Could not get journal: %w`, err)
+		return nil, err
+	}
+
+	if j == nil {
+		return nil, errors.New("journal not found")
 	}
 
 	j.Notes, err = s.n.GetByJournalID(j.ID)
 	if err != nil {
-		return j, fmt.Errorf(`Could not get journal notes: %w`, err)
+		return j, err
 	}
 
 	return j, nil
@@ -40,14 +45,18 @@ func (s *Service) Get(name string) (*journal.Journal, error) {
 func (s *Service) GetAll() ([]journal.Journal, error) {
 	journals, err := s.j.GetAll()
 	if err != nil {
-		return nil, fmt.Errorf(`Could not get journals: %w`, err)
+		return nil, err
+	}
+
+	if journals == nil {
+		return nil, errors.New("no journals found")
 	}
 
 	for _, j := range journals {
 		j.Notes, err = s.n.GetByJournalID(j.ID)
 		if err != nil {
 			// TODO maybe try getting other journal notes instead of return
-			return journals, fmt.Errorf(`Could not get journal "%v" notes: %w`, j.Name, err)
+			return journals, err
 		}
 	}
 
@@ -56,16 +65,107 @@ func (s *Service) GetAll() ([]journal.Journal, error) {
 
 // Create journal
 func (s *Service) Create(name string, isDefault bool) error {
-	_, err := s.j.Create(name)
+	j, err := s.j.Get(name)
 	if err != nil {
-		return fmt.Errorf(`Could not create journal: %w`, err)
+		return err
+	}
+
+	if j != nil {
+		return errors.New("journal already exists")
+	}
+
+	_, err = s.j.Create(name)
+	if err != nil {
+		return fmt.Errorf(`journal not created: %w`, err)
 	}
 
 	if isDefault {
 		err = s.j.SetDefault(name)
 		if err != nil {
-			return fmt.Errorf(`Journal created, but could not set default: %w`, err)
+			return fmt.Errorf(`journal created, but not set default: %w`, err)
 		}
+	}
+
+	return nil
+}
+
+// Remove a journal
+func (s *Service) Remove(name string) error {
+	// TODO seems like we need goroutine and sqlite optimized for mthread read
+	j, err := s.j.Get(name)
+	if err != nil {
+		return err
+	}
+
+	if j == nil {
+		return errors.New("journal not found")
+	}
+
+	j, err = s.j.GetDefault()
+	if err != nil {
+		return err
+	}
+
+	if j.Name == name {
+		return errors.New("deleting default journal is prohibited by law")
+	}
+
+	err = s.j.Remove(name)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// SetDefault journal
+func (s *Service) SetDefault(name string) error {
+	// TODO seems like we need goroutine and sqlite optimized for mthread read
+	j, err := s.j.Get(name)
+	if err != nil {
+		return err
+	}
+
+	if j == nil {
+		return errors.New("journal not found")
+	}
+
+	err = s.j.SetDefault(name)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GetDefault journal
+func (s *Service) GetDefault() (*journal.Journal, error) {
+	j, err := s.j.GetDefault()
+	if err != nil {
+		return nil, err
+	}
+
+	if j == nil {
+		return nil, errors.New("default journal not found")
+	}
+
+	return j, nil
+}
+
+// Rename a journal
+func (s *Service) Rename(old string, new string) error {
+	j, err := s.j.Get(old)
+	if err != nil {
+		return err
+	}
+
+	if j == nil {
+		return errors.New("journal not found")
+	}
+
+	err = s.j.Update(old, new)
+	if err != nil {
+		return err
 	}
 
 	return nil
