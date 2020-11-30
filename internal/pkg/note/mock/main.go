@@ -3,6 +3,7 @@ package mock
 // TODO don't know if importing parent is good idea
 import (
 	"github.com/rolandmarg/jou/internal/pkg/note"
+	"github.com/rolandmarg/jou/internal/pkg/random"
 )
 
 // Repository is mock implementation of note repository
@@ -15,6 +16,20 @@ type Repository struct {
 	CreateInvoked         bool
 	RemoveFn              func(id int64) error
 	RemoveInvoked         bool
+}
+
+// Generate note struct with random data
+func (r *Repository) Generate() *note.Note {
+	n := &note.Note{}
+	n.ID = random.Int64()
+	n.JournalID = random.Int64()
+	n.Title = random.String(128)
+	n.Body = random.String(65535)
+	n.Mood = random.String(64)
+	n.Tags = random.Strings(64, 12)
+	n.CreatedAt = random.Time()
+
+	return n
 }
 
 // Get is mock implementation of note.Repository.Get

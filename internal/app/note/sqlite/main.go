@@ -98,7 +98,7 @@ func (r *repository) Create(journalID int64, title, body, mood string, tags []st
 	defer tx.Rollback()
 
 	res, err := tx.Exec(
-		`INSERT INTO note (j_id, title, body, mood, created_at) VALUES (?, ?, ?, ?, ?)`,
+	`INSERT INTO note (j_id, title, body, mood, created_at) VALUES (?, ?, ?, ?, ?)`,
 		journalID, title, body, mood, time.Now())
 	if err != nil {
 		return 0, err

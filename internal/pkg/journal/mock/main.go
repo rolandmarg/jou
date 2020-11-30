@@ -3,7 +3,18 @@ package mock
 // TODO don't know if importing parent is good idea
 import (
 	"github.com/rolandmarg/jou/internal/pkg/journal"
+	"github.com/rolandmarg/jou/internal/pkg/random"
 )
+
+// Generate note struct with random data
+func (r *Repository) Generate() *journal.Journal {
+	j := &journal.Journal{}
+	j.ID = random.Int64()
+	j.Name = random.String(128)
+	j.CreatedAt = random.Time()
+
+	return j
+}
 
 // Repository is mock implementation of journal repository
 type Repository struct {

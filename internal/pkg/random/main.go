@@ -1,4 +1,4 @@
-package main
+package random
 
 import (
 	"math/rand"
@@ -9,21 +9,21 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-// RandomInt returns random positive integer
-func RandomInt() int {
+// Int returns random positive integer
+func Int() int {
 	return rand.Int()
 }
 
-// RandomInt64 returns random positive 64 bit integer
-func RandomInt64() int64 {
+// Int64 returns random positive 64 bit integer
+func Int64() int64 {
 	return rand.Int63()
 }
 
 const charset = "abcdefghijklmnopqrstuvwxyz" +
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ" + "0123456789"
 
-// RandomString returns random string
-func RandomString(length int) string {
+// String returns random string
+func String(length int) string {
 	b := make([]byte, length)
 	for i := range b {
 		b[i] = charset[rand.Intn(len(charset))]
@@ -31,12 +31,23 @@ func RandomString(length int) string {
 	return string(b)
 }
 
-// RandomStrings returns slice of random strings
-func RandomStrings(strLen, sliceLen int) []string {
+// Strings returns slice of random strings
+func Strings(strLen, sliceLen int) []string {
 	s := make([]string, sliceLen)
 	for i := range s {
-		s[i] = RandomString(strLen)
+		s[i] = String(strLen)
 	}
 
 	return s
+}
+
+// Time generates random time.Time
+func Time() time.Time {
+	// https://stackoverflow.com/a/43497333
+	min := time.Date(1970, 1, 0, 0, 0, 0, 0, time.UTC).Unix()
+	max := time.Date(2070, 1, 0, 0, 0, 0, 0, time.UTC).Unix()
+	delta := max - min
+
+	sec := rand.Int63n(delta) + min
+	return time.Unix(sec, 0)
 }
