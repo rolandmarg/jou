@@ -103,14 +103,20 @@ func TestGetAll(t *testing.T) {
 	})
 	t.Run("Should success on repository success", func(t *testing.T) {
 		jar := []journal.Journal{*jr.Generate(), *jr.Generate()}
+		nar := []note.Note{*nr.Generate(), *nr.Generate()}
 		jr.GetAllFn = func() ([]journal.Journal, error) { return jar, nil }
-		nr.GetByJournalIDFn = func(id int64) ([]note.Note, error) { return []note.Note{*nr.Generate()}, nil }
+		nr.GetByJournalIDFn = func(id int64) ([]note.Note, error) { return nar, nil }
 		j, err := s.GetAll()
 		if err != nil {
 			t.Fatal(err)
 		}
 		if len(jar) != len(j) {
 			t.Fatalf("Expected length %v received %v", len(jar), len(j))
+		}
+		for i := range j {
+			if len(j[i].Notes) != len(nar) {
+				t.Fatalf("Expected notes length %v received %v", len(nar), len(j[i].Notes))
+			}
 		}
 		if !jr.GetAllInvoked {
 			t.Fatal("Repository.GetAll did not invoke")

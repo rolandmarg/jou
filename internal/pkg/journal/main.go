@@ -21,7 +21,9 @@ func (j Journal) String() string {
 		str = fmt.Sprintln(str, " note:")
 		str = fmt.Sprintln(str, "   id:", e.ID)
 		str = fmt.Sprintln(str, "   title:", e.Title)
-		str = fmt.Sprintln(str, "   body:", e.Body)
+		if e.Body != "" {
+			str = fmt.Sprintln(str, "   body:", e.Body)
+		}
 		if e.Mood != "" {
 			str = fmt.Sprintln(str, "   mood:", e.Mood)
 		}

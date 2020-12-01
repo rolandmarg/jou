@@ -41,6 +41,25 @@ func (s *Service) Get(name string) (*journal.Journal, error) {
 	return j, nil
 }
 
+// GetDefault journal
+func (s *Service) GetDefault() (*journal.Journal, error) {
+	j, err := s.j.GetDefault()
+	if err != nil {
+		return nil, err
+	}
+
+	if j == nil {
+		return nil, errors.New("default journal not found")
+	}
+
+	j.Notes, err = s.n.GetByJournalID(j.ID)
+	if err != nil {
+		return j, err
+	}
+
+	return j, nil
+}
+
 // GetAll journals
 func (s *Service) GetAll() ([]journal.Journal, error) {
 	journals, err := s.j.GetAll()
@@ -52,8 +71,8 @@ func (s *Service) GetAll() ([]journal.Journal, error) {
 		return nil, errors.New("no journals found")
 	}
 
-	for _, j := range journals {
-		j.Notes, err = s.n.GetByJournalID(j.ID)
+	for i := range journals {
+		journals[i].Notes, err = s.n.GetByJournalID(journals[i].ID)
 		if err != nil {
 			// TODO maybe try getting other journal notes instead of return
 			return journals, err
@@ -136,20 +155,6 @@ func (s *Service) SetDefault(name string) error {
 	}
 
 	return nil
-}
-
-// GetDefault journal
-func (s *Service) GetDefault() (*journal.Journal, error) {
-	j, err := s.j.GetDefault()
-	if err != nil {
-		return nil, err
-	}
-
-	if j == nil {
-		return nil, errors.New("default journal not found")
-	}
-
-	return j, nil
 }
 
 // Rename a journal

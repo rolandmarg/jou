@@ -45,4 +45,9 @@ jou open journal [?journalName]
 jou list journal
 
 jou add [?note]
+
+add plugins
+add plugin for scrapping books from goodreads, and adds want to read read reading journals
+add plugin for scrapping/adding movies
+add plugin for serving content over http
 */
