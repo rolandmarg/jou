@@ -48,7 +48,7 @@ func (s *Service) GetAll() ([]journal.Journal, error) {
 		return nil, err
 	}
 
-	if journals == nil {
+	if journals == nil || len(journals) == 0 {
 		return nil, errors.New("no journals found")
 	}
 
