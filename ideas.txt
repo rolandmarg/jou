@@ -1,0 +1,8 @@
+add plugins: books, movies, passwords, httpServer
+have ability to manually build journal  by commands
+have ability to export manually build history as plugin conf file.
+
+books plugin should:
+import books from csv, dynamically match csv columns with db columns
+have tags/categories like interesting, want to read, reading, finished
+add books, move books between categories, remove books, display books.(by --tag=reading)
