@@ -1,31 +1,26 @@
-package sqlite
+package note
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/rolandmarg/jou/internal/pkg/note"
+	"github.com/rolandmarg/jou/internal/pkg/journal/note"
 	"github.com/rolandmarg/jou/internal/platform/sqlite"
 )
 
 func setup(t *testing.T) (note.Repository, func()) {
-	name := fmt.Sprintf("file:%v.db?cache=shared&mode=memory", t.Name())
-	db, e := sqlite.Open(name)
-	her(t, e)
+	fixture := `
+	INSERT INTO note (j_id, title, body, mood, created_at) 
+		VALUES (1, "testTitle", "testBody", "testMood", "2020-01-01");
+	INSERT INTO note (j_id, title, body, mood, created_at) 
+		VALUES (1, "testTitle2", "testBody2", "testMood2", "2020-01-02");
+	INSERT INTO note (j_id, title, body, mood, created_at) 
+		VALUES (2, "testTitle3", "testBody3", "testMood3", "2020-01-03");
 
-	_, e = db.Exec(`
-		INSERT INTO note (j_id, title, body, mood, created_at) 
-			VALUES (1, "testTitle", "testBody", "testMood", "2020-01-01");
-		INSERT INTO note (j_id, title, body, mood, created_at) 
-			VALUES (1, "testTitle2", "testBody2", "testMood2", "2020-01-02");
-		INSERT INTO note (j_id, title, body, mood, created_at) 
-			VALUES (2, "testTitle3", "testBody3", "testMood3", "2020-01-03");
-
-		INSERT INTO tag (name, note_id) VALUES ("testTag", 1);
-		INSERT INTO tag (name, note_id) VALUES ("testTag2", 1);
-		INSERT INTO tag (name, note_id) VALUES ("testTag", 2);
-		
-	`)
+	INSERT INTO tag (name, note_id) VALUES ("testTag", 1);
+	INSERT INTO tag (name, note_id) VALUES ("testTag2", 1);
+	INSERT INTO tag (name, note_id) VALUES ("testTag", 2);	
+`
+	db, e := sqlite.OpenTestDB(t.Name(), fixture)
 	her(t, e)
 
 	r := MakeRepository(db)

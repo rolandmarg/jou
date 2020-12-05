@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/rolandmarg/jou/internal/app/journal"
-	"github.com/rolandmarg/jou/internal/app/note"
 )
 
 func print(err error, args ...interface{}) {
@@ -99,10 +98,10 @@ var addCMD = &cobra.Command{
 Examples: jou add "goes to default journal", jou add secretj "deep note"`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 2 {
-			err := note.Connect().Create(args[0], args[1])
+			err := journal.Connect().CreateNote(args[0], args[1])
 			print(err)
 		} else {
-			err := note.Connect().CreateDefault(args[0])
+			err := journal.Connect().CreateNote("", args[0])
 			print(err)
 		}
 	},

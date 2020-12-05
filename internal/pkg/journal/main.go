@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/rolandmarg/jou/internal/pkg/note"
+	"github.com/rolandmarg/jou/internal/pkg/journal/note"
+	"github.com/rolandmarg/jou/internal/pkg/random"
 )
 
 // Journal structure
@@ -46,4 +47,74 @@ type Repository interface {
 	Create(name string) (int64, error)
 	Update(oldName, newName string) error
 	Remove(name string) error
+}
+
+// MockRepository is mock implementation of journal MockRepository
+type MockRepository struct {
+	GetFn             func(name string) (*Journal, error)
+	GetInvoked        bool
+	GetAllFn          func() ([]Journal, error)
+	GetAllInvoked     bool
+	GetDefaultFn      func() (*Journal, error)
+	GetDefaultInvoked bool
+	SetDefaultFn      func(name string) error
+	SetDefaultInvoked bool
+	CreateFn          func(name string) (int64, error)
+	CreateInvoked     bool
+	UpdateFn          func(oldName, newname string) error
+	UpdateInvoked     bool
+	RemoveFn          func(name string) error
+	RemoveInvoked     bool
+}
+
+// Generate random journal
+func (r *MockRepository) Generate() *Journal {
+	j := &Journal{}
+	j.ID = random.Int64()
+	j.Name = random.String(128)
+	j.CreatedAt = random.Time()
+
+	return j
+}
+
+// Get is mock implementation of journal.MockRepository.Get
+func (r *MockRepository) Get(name string) (*Journal, error) {
+	r.GetInvoked = true
+	return r.GetFn(name)
+}
+
+// GetAll is mock implementation of journal.MockRepository.GetAll
+func (r *MockRepository) GetAll() ([]Journal, error) {
+	r.GetAllInvoked = true
+	return r.GetAllFn()
+}
+
+// GetDefault is mock implementation of journal.MockRepository.GetDefault
+func (r *MockRepository) GetDefault() (*Journal, error) {
+	r.GetDefaultInvoked = true
+	return r.GetDefaultFn()
+}
+
+// SetDefault is mock implementation of journal.MockRepository.SetDefault
+func (r *MockRepository) SetDefault(name string) error {
+	r.SetDefaultInvoked = true
+	return r.SetDefaultFn(name)
+}
+
+// Create is mock implementation of journal.MockRepository.Create
+func (r *MockRepository) Create(name string) (int64, error) {
+	r.CreateInvoked = true
+	return r.CreateFn(name)
+}
+
+// Update is mock implementation of journal.MockRepository.Update
+func (r *MockRepository) Update(oldName, newName string) error {
+	r.UpdateInvoked = true
+	return r.UpdateFn(oldName, newName)
+}
+
+// Remove is mock implementation of journal.MockRepository.Remove
+func (r *MockRepository) Remove(name string) error {
+	r.RemoveInvoked = true
+	return r.RemoveFn(name)
 }

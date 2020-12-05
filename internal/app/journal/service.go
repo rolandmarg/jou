@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/rolandmarg/jou/internal/pkg/journal"
-	"github.com/rolandmarg/jou/internal/pkg/note"
+	"github.com/rolandmarg/jou/internal/pkg/journal/note"
 )
 
 // Service provides journal functions
@@ -120,15 +120,6 @@ func (s *Service) Remove(name string) error {
 		return errors.New("journal not found")
 	}
 
-	j, err = s.j.GetDefault()
-	if err != nil {
-		return err
-	}
-
-	if j.Name == name {
-		return errors.New("deleting default journal is prohibited by law")
-	}
-
 	err = s.j.Remove(name)
 	if err != nil {
 		return err
@@ -169,6 +160,32 @@ func (s *Service) Rename(old string, new string) error {
 	}
 
 	err = s.j.Update(old, new)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// CreateNote creates a note, pass empty journalName to create in default journal
+func (s *Service) CreateNote(journalName string, note string) error {
+	var j *journal.Journal
+	var err error
+	if journalName == "" {
+		j, err = s.j.GetDefault()
+	} else {
+		j, err = s.j.Get(journalName)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	if j == nil {
+		return errors.New("journal not found")
+	}
+
+	_, err = s.n.Create(j.ID, note, "", "", []string{})
 	if err != nil {
 		return err
 	}

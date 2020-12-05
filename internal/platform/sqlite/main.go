@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"database/sql"
+	"fmt"
 
 	// import sqlite3 driver
 	_ "github.com/mattn/go-sqlite3"
@@ -62,11 +63,27 @@ func Open(name string) (*sql.DB, error) {
 	return DB, nil
 }
 
-// OpenDB is a helper function that opens and populates production database
+// OpenDB is a helper function that opens production database
 func OpenDB() (*sql.DB, error) {
 	db, err := Open("jou.db")
 	if err != nil {
 		return nil, err
+	}
+
+	return db, nil
+}
+
+// OpenTestDB is a helper function that opens test db and populates with fixture sql query
+func OpenTestDB(name string, fixture string) (*sql.DB, error) {
+	connection := fmt.Sprintf("file:%v.db?cache=shared&mode=memory", name)
+	db, err := Open(connection)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = db.Exec(fixture)
+	if err != nil {
+		return db, err
 	}
 
 	return db, nil

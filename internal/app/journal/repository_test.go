@@ -1,22 +1,18 @@
-package sqlite
+package journal
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/rolandmarg/jou/internal/pkg/journal"
 	"github.com/rolandmarg/jou/internal/platform/sqlite"
 )
 
-func setup(t *testing.T) (journal.Repository, func()) {
-	name := fmt.Sprintf("file:%v.db?cache=shared&mode=memory", t.Name())
-	db, e := sqlite.Open(name)
-	her(t, e)
-
-	_, e = db.Exec(`
-		INSERT INTO journal (name, created_at) VALUES ("test", "2020-01-01");
-		INSERT INTO journal (name, created_at) VALUES ("test2", "2020-01-02");
-	`)
+func setupRepository(t *testing.T) (journal.Repository, func()) {
+	fixture := `
+	INSERT INTO journal (name, created_at) VALUES ("test", "2020-01-01");
+	INSERT INTO journal (name, created_at) VALUES ("test2", "2020-01-02");
+`
+	db, e := sqlite.OpenTestDB(t.Name(), fixture)
 	her(t, e)
 
 	r := MakeRepository(db)
@@ -32,8 +28,8 @@ func her(t *testing.T, args ...interface{}) {
 	}
 }
 
-func TestGet(t *testing.T) {
-	r, teardown := setup(t)
+func TestRepositoryGet(t *testing.T) {
+	r, teardown := setupRepository(t)
 	defer teardown()
 
 	name := "test"
@@ -51,16 +47,16 @@ func TestGet(t *testing.T) {
 	}
 }
 
-func TestSetDefault(t *testing.T) {
-	r, teardown := setup(t)
+func TestRepositorySetDefault(t *testing.T) {
+	r, teardown := setupRepository(t)
 	defer teardown()
 
 	e := r.SetDefault("test")
 	her(t, e)
 }
 
-func TestGetDefault(t *testing.T) {
-	r, teardown := setup(t)
+func TestRepositoryGetDefault(t *testing.T) {
+	r, teardown := setupRepository(t)
 	defer teardown()
 
 	e := r.SetDefault("test")
@@ -74,8 +70,8 @@ func TestGetDefault(t *testing.T) {
 	}
 }
 
-func TestUpdate(t *testing.T) {
-	r, teardown := setup(t)
+func TestRepositoryUpdate(t *testing.T) {
+	r, teardown := setupRepository(t)
 	defer teardown()
 
 	_, e := r.Create("xutu")
@@ -94,8 +90,8 @@ func TestUpdate(t *testing.T) {
 		her(t, "Expected journal xutu not to exist")
 	}
 }
-func TestCreate(t *testing.T) {
-	r, teardown := setup(t)
+func TestRepositoryCreate(t *testing.T) {
+	r, teardown := setupRepository(t)
 	defer teardown()
 
 	_, e := r.Create("testJ")
@@ -112,8 +108,8 @@ func TestCreate(t *testing.T) {
 	}
 }
 
-func TestCreateDuplicate(t *testing.T) {
-	r, teardown := setup(t)
+func TestRepositoryCreateDuplicate(t *testing.T) {
+	r, teardown := setupRepository(t)
 	defer teardown()
 
 	_, e := r.Create("dup")
@@ -125,8 +121,8 @@ func TestCreateDuplicate(t *testing.T) {
 	}
 }
 
-func TestRemove(t *testing.T) {
-	r, teardown := setup(t)
+func TestRepositoryRemove(t *testing.T) {
+	r, teardown := setupRepository(t)
 	defer teardown()
 
 	_, e := r.Create("testJ")

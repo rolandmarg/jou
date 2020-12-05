@@ -1,11 +1,11 @@
-package sqlite
+package note
 
 import (
 	"database/sql"
 	"strings"
 	"time"
 
-	"github.com/rolandmarg/jou/internal/pkg/note"
+	"github.com/rolandmarg/jou/internal/pkg/journal/note"
 )
 
 type repository struct {

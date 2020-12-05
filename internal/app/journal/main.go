@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	// TODO THIS IS UGLY
-	jr "github.com/rolandmarg/jou/internal/app/journal/sqlite"
-	nr "github.com/rolandmarg/jou/internal/app/note/sqlite"
+	"github.com/rolandmarg/jou/internal/app/journal/note"
 	"github.com/rolandmarg/jou/internal/platform/sqlite"
 )
 
@@ -17,8 +15,8 @@ func Connect() *Service {
 		fmt.Fprintln(os.Stderr, "Could not open database: ", err)
 		os.Exit(1)
 	}
-	n := nr.MakeRepository(db)
-	j := jr.MakeRepository(db)
+	n := note.MakeRepository(db)
+	j := MakeRepository(db)
 
 	s := MakeService(j, n)
 
